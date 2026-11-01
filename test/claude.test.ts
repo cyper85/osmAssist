@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { assess } from '../src/check.js';
 import { createClaudeProvider } from '../src/claude.js';
 import { aiAssistedTag, claudeModel, estimateCost } from '../src/models.js';
 import { AssistError, type AssistRequest } from '../src/types.js';
@@ -85,6 +86,16 @@ describe('createClaudeProvider', () => {
     expect(sent?.headers.get('anthropic-beta')).toContain('server-side-fallback-2026-07-01');
     expect(JSON.stringify(sent?.body.messages)).toContain('Website: https://www.sonnenschein.example/');
     expect(JSON.stringify(sent?.body.messages)).not.toContain('building');
+  });
+
+  it('reads the site once and assesses it for several elements', async () => {
+    const api = fakeApi({ body: message([fetchCall, fetchResult, answer]) });
+    const reading = await createClaudeProvider({ apiKey: 'sk-test', fetch: api.fetch }).read(request);
+    const withHours = { ...request, element: { ...request.element, tags: { opening_hours: 'Mo-Fr 06:00-18:00' } } };
+    expect(assess(reading, request).proposals).toHaveLength(1);
+    expect(assess(reading, withHours).proposals).toEqual([]);
+    expect(assess(reading, withHours).rejected[0]?.reason).toBe('unchanged');
+    expect(api.requests).toHaveLength(1);
   });
 
   it('resumes a paused turn', async () => {

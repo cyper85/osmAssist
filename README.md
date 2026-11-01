@@ -25,7 +25,9 @@ before anything is changed in OpenStreetMap. It is used by
 ## Usage
 
 ```ts
-import { createClaudeProvider, aiAssistedTag } from 'osmassist';
+import { aiAssistedTag } from 'osmassist';
+// separate entry point, so a web app can load the SDK only when it is needed
+import { createClaudeProvider } from 'osmassist/claude';
 
 const provider = createClaudeProvider({ apiKey: userKey }); // Claude Sonnet 5.5 by default
 
@@ -48,6 +50,21 @@ result.rejected;  // suggestions that failed a check, with reason
 result.pages;     // fetched pages, with an error code where fetching failed
 result.usage;     // tokens and estimated cost in USD
 aiAssistedTag([result.model]); // 'Anthropic Claude Sonnet 5.5', for the changeset
+```
+
+`analyze` is `read` and `assess` in one step. `read` costs tokens and does
+not depend on the current tags: the model reports everything the site says.
+`assess(reading, request, validate)` compares it with the tags of one
+element and costs nothing, so a reading can be reused for other elements
+with the same website (and the same address, if the site lists several
+locations):
+
+```ts
+import { assess } from 'osmassist';
+
+const reading = await provider.read(request);
+assess(reading, request, validate);
+assess(reading, { ...request, element: otherElement }, validate);
 ```
 
 Keys follow the form the feature already uses (`phone` or `contact:phone`);

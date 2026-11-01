@@ -35,6 +35,27 @@ export const SIGNAL_KINDS = ['closed', 'moved', 'parked', 'new_owner'] as const;
  */
 export type SignalKind = (typeof SIGNAL_KINDS)[number];
 
+/** One suggestion as the model returns it (see ANSWER_SCHEMA). */
+export interface RawProposal {
+  field: Field;
+  network: Network | 'none';
+  value: string;
+  quote: string;
+  source_url: string;
+}
+
+export interface RawSignal {
+  kind: SignalKind;
+  quote: string;
+  source_url: string;
+}
+
+/** What the model found on the website, independent of the current tags. */
+export interface RawAnswer {
+  proposals: RawProposal[];
+  signals: RawSignal[];
+}
+
 export interface AssistElement {
   type: 'node' | 'way' | 'relation';
   id: number;
@@ -125,9 +146,27 @@ export interface AssistResult {
   usage: Usage;
 }
 
+/**
+ * The website as read by the model. It does not depend on the current tags,
+ * so it can be reused for other elements with the same website (and the same
+ * address); `assess` compares it with the tags of each element.
+ */
+export interface SiteReading {
+  url: string;
+  answer: RawAnswer;
+  /** text of each fetched page, by URL, for checking the quotes */
+  texts: Record<string, string>;
+  pages: FetchedPage[];
+  model: ModelInfo;
+  usage: Usage;
+}
+
 export interface Provider {
   id: string;
   label: string;
+  /** Reads the website (this costs tokens). */
+  read(request: AssistRequest, options?: { signal?: AbortSignal }): Promise<SiteReading>;
+  /** `read` and `assess` in one step. */
   analyze(request: AssistRequest, options?: AnalyzeOptions): Promise<AssistResult>;
 }
 

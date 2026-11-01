@@ -21,6 +21,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./claude": {
+      "types": "./dist/claude.d.ts",
+      "import": "./dist/claude.js"
     }
   },
   "files": [

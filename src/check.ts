@@ -4,34 +4,16 @@ import {
   NETWORKS,
   SIGNAL_KINDS,
   type AssistRequest,
+  type AssistResult,
   type Field,
-  type Network,
   type Proposal,
+  type RawAnswer,
+  type RawProposal,
   type Rejected,
   type Signal,
-  type SignalKind,
+  type SiteReading,
   type Validate,
 } from './types.js';
-
-/** One suggestion as the model returns it (see schema.ts). */
-export interface RawProposal {
-  field: Field;
-  network: Network | 'none';
-  value: string;
-  quote: string;
-  source_url: string;
-}
-
-export interface RawSignal {
-  kind: SignalKind;
-  quote: string;
-  source_url: string;
-}
-
-export interface RawAnswer {
-  proposals: RawProposal[];
-  signals: RawSignal[];
-}
 
 const isObject = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 const isString = (value: unknown): value is string => typeof value === 'string';
@@ -163,4 +145,10 @@ export function checkAnswer(
     .filter((raw) => onSite(raw.source_url, host) && containsQuote(text(raw.source_url), raw.quote))
     .map((raw) => ({ kind: raw.kind, quote: raw.quote, sourceUrl: raw.source_url }));
   return { proposals, signals, rejected };
+}
+
+/** Compares what was read on the website with the tags of one element. Costs nothing. */
+export function assess(reading: SiteReading, request: AssistRequest, validate?: Validate): AssistResult {
+  const checked = checkAnswer(reading.answer, new Map(Object.entries(reading.texts)), request, validate);
+  return { ...checked, pages: reading.pages, model: reading.model, usage: reading.usage };
 }

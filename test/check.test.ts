@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { checkAnswer, isRawAnswer, targetKey, type RawAnswer, type RawProposal } from '../src/check.js';
+import { checkAnswer, isRawAnswer, targetKey } from '../src/check.js';
 import { containsQuote, onSite, siteHost } from '../src/text.js';
-import type { AssistRequest, Validate } from '../src/types.js';
+import type { AssistRequest, RawAnswer, RawProposal, Validate } from '../src/types.js';
 
 const PAGE = `Bäckerei Sonnenschein – Ihr Bäcker in Ilmenau
 Öffnungszeiten: Montag bis Freitag 6–18 Uhr, Samstag 6–12 Uhr
