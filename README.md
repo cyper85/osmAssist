@@ -134,7 +134,7 @@ npm run build   # dist/
 npm run schema  # schema/answer-file.schema.json from the code
 ```
 
-Releases: a GitHub release with a tag like `v0.1.0` (matching `version` in
+Releases: a GitHub release with a tag like `v1.0.0-alpha.1` (matching `version` in
 `package.json`) publishes the package to npm (`.github/workflows/publish.yaml`,
 npm trusted publishing, no token). Versions with a suffix such as
 `1.0.0-alpha.1` get the npm tag `next`, others `latest`.

@@ -1,7 +1,7 @@
 name: Publish
 
 # Publishes to npm when a GitHub release is published. The release tag must
-# match the version in package.json, e.g. v0.1.0.
+# match the version in package.json, e.g. v1.0.0-alpha.1.
 #
 # Uses npm trusted publishing (OIDC), no token needed. Set it up once on
 # npmjs.com: package settings → Trusted Publisher → GitHub Actions,
