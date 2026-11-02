@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/cyper85/osmAssist/master/schema/answer-file.schema.json",
+  "title": "osmAssist answer file",
+  "description": "What an AI agent found on the website of one job (one website, one or more OpenStreetMap elements). See docs/answer-file.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "ai",
+    "job",
+    "elements",
+    "url",
+    "fetched_with",
+    "pages",
+    "proposals",
+    "signals"
+  ],
+  "properties": {
+    "format": {
+      "const": "osmcorrection-assist-answer"
+    },
+    "version": {
+      "const": 1
+    },
+    "ai": {
+      "type": "object",
+      "description": "The AI that wrote this answer. Used for the changeset tag ai_assisted, after the user confirmed it.",
+      "additionalProperties": false,
+      "required": [
+        "vendor",
+        "model",
+        "tool"
+      ],
+      "properties": {
+        "vendor": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Maker of the model (not of the tool), e.g. \"Anthropic\", \"OpenAI\", \"Google\", \"Amazon\"."
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The model, e.g. \"claude-opus-5-5\"; \"unknown\" if not known."
+        },
+        "tool": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The agent it ran in, e.g. \"Claude Code\", \"Kiro\", \"Codex CLI\"."
+        }
+      }
+    },
+    "job": {
+      "type": "string",
+      "description": "ID of the job, e.g. \"a1\"."
+    },
+    "elements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^(node|way|relation)/[0-9]+$"
+      },
+      "description": "The elements of the job, as in the job list."
+    },
+    "url": {
+      "type": "string",
+      "description": "The website from the OpenStreetMap data."
+    },
+    "fetched_with": {
+      "enum": [
+        "browser",
+        "curl"
+      ],
+      "description": "How the pages were saved."
+    },
+    "pages": {
+      "type": "array",
+      "description": "Every page fetched, with \"file\" (saved) or \"error\" (could not be fetched).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "file": {
+            "type": "string",
+            "pattern": "^seiten/[^/]+\\.html$"
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "file"
+            ]
+          },
+          {
+            "required": [
+              "error"
+            ]
+          }
+        ]
+      }
+    },
+    "proposals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "field",
+          "network",
+          "value",
+          "quote",
+          "source_url"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "enum": [
+              "opening_hours",
+              "phone",
+              "fax",
+              "email",
+              "website",
+              "social"
+            ]
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "none",
+              "facebook",
+              "twitter",
+              "instagram",
+              "tiktok",
+              "youtube",
+              "linkedin",
+              "xing",
+              "pinterest",
+              "vimeo",
+              "flickr",
+              "vk",
+              "mastodon",
+              "bluesky",
+              "mobilizon",
+              "diaspora",
+              "gnusocial",
+              "telegram",
+              "whatsapp",
+              "matrix",
+              "tripadvisor"
+            ]
+          },
+          "value": {
+            "type": "string"
+          },
+          "quote": {
+            "type": "string"
+          },
+          "source_url": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "signals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "quote",
+          "source_url"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "closed",
+              "moved",
+              "parked",
+              "new_owner"
+            ]
+          },
+          "quote": {
+            "type": "string"
+          },
+          "source_url": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

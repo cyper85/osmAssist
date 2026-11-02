@@ -117,6 +117,36 @@ describe('checkAnswer', () => {
     expect(same.rejected[0]?.reason).toBe('unchanged');
   });
 
+  // first real run (2026-11-02): the old domain's start page links to the new one
+  it('accepts sources on a domain the site itself links to, but not on platforms', () => {
+    const site = new Map([
+      ['https://www.sonnenschein.example/', 'Neue Seite (https://sonnenschein-neu.example/kontakt) · Facebook (https://www.facebook.com/x)'],
+      ['https://sonnenschein-neu.example/kontakt', PAGE],
+      ['https://www.facebook.com/x', 'Öffnungszeiten: Montag bis Freitag 6-18 Uhr'],
+    ]);
+    const moved = checkAnswer(answer(proposal({ source_url: 'https://sonnenschein-neu.example/kontakt' })), site, request({}));
+    expect(moved.proposals).toHaveLength(1);
+    const platform = checkAnswer(answer(proposal({ source_url: 'https://www.facebook.com/x' })), site, request({}));
+    expect(platform.rejected[0]?.reason).toBe('foreign_source');
+  });
+
+  // first real run (2026-11-02): the phone number before the quoted e-mail was a tel: link
+  it('finds quotes of the visible text between links', () => {
+    const site = new Map([
+      ['https://www.sonnenschein.example/kontakt', 'Telefon: 03677 8468-0 (tel:+493677846800) E-Mail: info@sonnenschein.example (mailto:info@sonnenschein.example)'],
+    ]);
+    const mail = proposal({ field: 'email', value: 'info@sonnenschein.example', quote: 'Telefon: 03677 8468-0 E-Mail: info@sonnenschein.example' });
+    expect(checkAnswer(answer(mail), site, request({})).proposals).toHaveLength(1);
+  });
+
+  it('drops values that only differ in spelling, by the compare of the caller', () => {
+    const compare = (_key: string, a: string, b: string) => a.replace(/; Su,PH off$/, '') === b;
+    const hours = request({ opening_hours: 'Mo-Fr 06:00-18:00; Sa 06:00-12:00; Su,PH off' });
+    const result = checkAnswer(answer(proposal({})), pages, hours, undefined, compare);
+    expect(result.proposals).toEqual([]);
+    expect(result.rejected[0]?.reason).toBe('unchanged');
+  });
+
   it('rejects invalid values', () => {
     const validate: Validate = (_key, value) => ({ valid: false, value, message: 'Format falsch' });
     const { rejected } = checkAnswer(answer(proposal({})), pages, request({}), validate);

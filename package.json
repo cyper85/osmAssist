@@ -25,15 +25,18 @@
     "./claude": {
       "types": "./dist/claude.d.ts",
       "import": "./dist/claude.js"
-    }
+    },
+    "./schema/answer-file.schema.json": "./schema/answer-file.schema.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "schema"
   ],
   "scripts": {
     "test": "vitest run",
     "build": "tsc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "schema": "npm run build && node scripts/write-schema.mjs"
   },
   "engines": {
     "node": ">=22"
@@ -42,6 +45,7 @@
     "@anthropic-ai/sdk": "^1.3.0"
   },
   "devDependencies": {
+    "ajv": "^8.20.0",
     "typescript": "^5.9.3",
     "vitest": "^5.0.5"
   }

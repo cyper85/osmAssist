@@ -85,9 +85,16 @@ export interface ValueCheck {
 /** Checks a value for a key; without it, every value counts as valid as it is. */
 export type Validate = (key: string, value: string) => ValueCheck;
 
+/**
+ * Whether two values of a key mean the same, beyond spelling, e.g. opening
+ * hours that only differ in an explicit "Su off".
+ */
+export type Compare = (key: string, a: string, b: string) => boolean;
+
 export interface AnalyzeOptions {
   signal?: AbortSignal;
   validate?: Validate;
+  compare?: Compare;
 }
 
 export interface Proposal {

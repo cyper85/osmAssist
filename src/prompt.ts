@@ -48,7 +48,7 @@ How to work:
 
 Values (field "proposals"), for everything the pages state, whether or not it matches the current tags:
 - opening_hours: the regular opening hours in OpenStreetMap syntax (https://wiki.openstreetmap.org/wiki/Key:opening_hours), for example "Mo-Fr 09:00-18:00; Sa 10:00-14:00". Ignore temporary changes such as holidays, company holidays or single closed days unless the page says the regular hours have changed.
-- phone, fax: in international format with the country code, for example "+49 3677 123456". Several numbers are separated by "; ".
+- phone, fax: in international format with the country code, for example "+49 3677 123456". Several numbers are separated by "; ". Keep an extension separated by a hyphen as on the page: "03677 6414-0" becomes "+49 3677 6414-0", not "+49 3677 64140" (OpenStreetMap allows the hyphen).
 - email: the address only, without "mailto:".
 - website: only if the page itself says the business has a new website address.
 - social: links to the business's own profiles on the networks listed in "network" (Facebook, X/Twitter, Instagram, LinkedIn, XING, Mastodon, …), as the full link. Not share buttons, not profiles of the web designer or of other businesses. Set "network" to the network; for all other fields set "network" to "none".

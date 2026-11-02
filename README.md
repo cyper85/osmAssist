@@ -74,6 +74,33 @@ Errors are thrown as `AssistError` with a `code` (`auth`, `rate_limit`,
 `refused`, `incomplete`, `invalid_response`, `api`, `aborted`). Messages are
 in English; callers translate them by code.
 
+## Analysis by an AI agent (e.g. Claude Code)
+
+To use an AI plan instead of API credits, the analysis can run in an AI
+agent on the user's computer, e.g. Claude Code with a Claude plan, Kiro or
+Codex CLI: `jobFile` writes the instructions with the element IDs
+(`auftrag.md`), the agent saves the pages (headless browser or `curl`) and
+writes one answer file per job, and the app reads them back:
+
+```ts
+import { assess, parseAnswerFile, readingFromAnswer } from 'osmassist';
+
+const answer = parseAnswerFile(json);                       // antworten/a1.json
+answer.ai;                                                  // { vendor, model, tool }, as the agent states it
+const reading = readingFromAnswer(answer, pages, vendor);   // pages: path → saved HTML; vendor: confirmed by the user
+assess(reading, { element, url: answer.url, today }, validate);
+```
+
+The format of the answer files is described in
+[docs/answer-file.md](docs/answer-file.md), with the JSON Schema in
+[schema/answer-file.schema.json](schema/answer-file.schema.json) (also
+exported as `ANSWER_FILE_SCHEMA` and as the package file
+`osmassist/schema/answer-file.schema.json`).
+
+`htmlToText` turns the saved HTML into text without a DOM; links keep their
+address, so profile links and e-mail addresses can be checked. `decodeHtml`
+reads saved files in UTF-8, UTF-16 or the charset the page declares.
+
 ## Claude
 
 - Web fetch tool (`web_fetch_20250910`) restricted to the site's domain, at
@@ -92,6 +119,7 @@ in English; callers translate them by code.
 npm install
 npm test        # vitest, with recorded API responses (no real API calls)
 npm run build   # dist/
+npm run schema  # schema/answer-file.schema.json from the code
 ```
 
 ## License
