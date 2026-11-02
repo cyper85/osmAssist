@@ -70,6 +70,15 @@ function example(language: JobLanguage) {
         kind: 'moved',
         quote: de ? 'Ab 1. März finden Sie uns in der Lindenstraße 5' : 'From 1 March you will find us at 5 Linden Street',
         source_url: site,
+        note: '',
+      },
+      {
+        kind: 'other',
+        quote: de ? 'Unsere Filialen: Gera, Rudolstadt, Suhl' : 'Our branches: Gera, Rudolstadt, Suhl',
+        source_url: `${site}${de ? 'kontakt' : 'contact'}`,
+        note: de
+          ? 'Die Seite nennt Filialen in Gera, Rudolstadt und Suhl, aber keine am Ort des Objekts.'
+          : 'The page lists branches in Gera, Rudolstadt and Suhl, but none at the location of the object.',
       },
     ],
   };
@@ -139,6 +148,9 @@ Vorschlag ist viel besser als ein falscher.
    - Ist kein solcher Browser vorhanden: \`curl -sL --max-time 20 --max-filesize 2000000 -A "osmCorrection (KI-Agent)" -o seiten/a1-1.html <website>\`
      und in der Antwort \`"fetched_with": "curl"\` angeben.
    - Ist eine gespeicherte Datei leer, die Seite in \`pages\` mit \`error\` vermerken.
+   - Leitet die Website auf eine andere Adresse um, die erhaltene Adresse in \`pages\` als \`final_url\` angeben.
+     Ermitteln mit \`curl -sL -o /dev/null -w "%{url_effective}" <website>\` (in PowerShell \`curl.exe\` und
+     \`-o NUL\`). Zitate von dieser Seite haben die \`final_url\` als \`source_url\`.
 4. Bis zu drei Unterseiten derselben Website genauso speichern (auch auf einer Domain, auf die die Startseite
    für Kontakt oder Impressum verlinkt) (\`seiten/a1-2.html\` …), deren Links nach
    Kontakt, Impressum oder Öffnungszeiten aussehen.
@@ -175,8 +187,20 @@ Wenn alle Aufträge erledigt sind: den Ordner \`browser/\` löschen.
 Jeder Eintrag in \`proposals\` hat genau die Felder \`field\`, \`network\`, \`value\`, \`quote\`, \`source_url\`.
 
 \`signals\`, nur wenn eine Seite es eindeutig sagt. Jeder Eintrag hat genau die Felder \`kind\`, \`quote\`,
-\`source_url\`; \`kind\` ist eines von \`closed\` (dauerhaft geschlossen), \`moved\` (umgezogen),
-\`parked\` (Domain zum Verkauf, geparkt, nur Platzhalter), \`new_owner\` (Website gehört jemand anderem).
+\`source_url\`, \`note\`; \`kind\` ist eines von \`closed\` (dauerhaft geschlossen), \`moved\` (umgezogen),
+\`parked\` (Domain zum Verkauf, geparkt, nur Platzhalter), \`new_owner\` (Website gehört jemand anderem),
+\`other\` (Auffälligkeit, siehe unten). \`note\` ist bei \`other\` ein Satz, der erklärt, was auffällt, sonst \`""\`.
+
+Melde als \`other\` alles, was ein Mapper sich ansehen sollte und in keine andere Art passt, statt es nur
+im Chat zu erwähnen, z. B.:
+
+- Die Website leitet auf eine andere Domain oder ein anderes Geschäft um (Zieladresse in \`note\`).
+- Die Seite nennt Filialen an anderen Orten, aber keine am Ort des Objekts.
+- Die Domain zeigt nur noch fremde Inhalte, z. B. einen einzelnen Blogartikel.
+- Das Geschäft ist vorübergehend geschlossen (die regulären Öffnungszeiten trotzdem melden).
+- Die Seite nennt eine andere Website des Geschäfts, ohne zu sagen, dass es die neue Adresse ist.
+
+Was du unsicher findest, gehört als \`other\` in \`signals\`, nicht als Wert in \`proposals\`.
 
 Für jeden Eintrag in beiden Listen:
 
@@ -266,6 +290,9 @@ reviews every suggestion before anything is changed. A missing suggestion is muc
    - If there is no such browser: \`curl -sL --max-time 20 --max-filesize 2000000 -A "osmCorrection (AI agent)" -o pages/a1-1.html <website>\`
      and state \`"fetched_with": "curl"\` in the answer.
    - If a saved file is empty, record the page in \`pages\` with \`error\`.
+   - If the website redirects to another address, state the address received as \`final_url\` in \`pages\`.
+     Find it with \`curl -sL -o /dev/null -w "%{url_effective}" <website>\` (in PowerShell \`curl.exe\` and
+     \`-o NUL\`). Quotes from this page have the \`final_url\` as \`source_url\`.
 4. Save up to three subpages of the same website the same way (also on a domain the start page links to for
    contact or imprint) (\`pages/a1-2.html\` …) whose links look like contact, imprint or opening hours.
 5. Analyze the pages. To save quota, first search the saved files for opening hours, weekdays, phone,
@@ -301,8 +328,20 @@ When all jobs are done: delete the folder \`browser/\`.
 Every entry in \`proposals\` has exactly the fields \`field\`, \`network\`, \`value\`, \`quote\`, \`source_url\`.
 
 \`signals\`, only if a page says so clearly. Every entry has exactly the fields \`kind\`, \`quote\`,
-\`source_url\`; \`kind\` is one of \`closed\` (permanently closed), \`moved\` (moved), \`parked\` (domain for
-sale, parked, only a placeholder), \`new_owner\` (website belongs to someone else).
+\`source_url\`, \`note\`; \`kind\` is one of \`closed\` (permanently closed), \`moved\` (moved), \`parked\` (domain for
+sale, parked, only a placeholder), \`new_owner\` (website belongs to someone else), \`other\` (something
+noticeable, see below). For \`other\`, \`note\` is one sentence explaining what is noticeable, otherwise \`""\`.
+
+Report as \`other\` anything a mapper should look at that fits no other kind, instead of only mentioning it
+in the chat, e.g.:
+
+- The website redirects to another domain or another business (target address in \`note\`).
+- The page lists branches in other places, but none at the location of the object.
+- The domain only shows unrelated content, e.g. a single blog article.
+- The business is temporarily closed (still report the regular opening hours).
+- The page names another website of the business without saying it is the new address.
+
+What you are unsure about belongs into \`signals\` as \`other\`, not as a value into \`proposals\`.
 
 For every entry in both lists:
 

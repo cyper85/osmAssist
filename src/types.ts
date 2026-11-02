@@ -27,11 +27,12 @@ export const NETWORKS = [
 ] as const;
 export type Network = (typeof NETWORKS)[number];
 
-export const SIGNAL_KINDS = ['closed', 'moved', 'parked', 'new_owner'] as const;
+export const SIGNAL_KINDS = ['closed', 'moved', 'parked', 'new_owner', 'other'] as const;
 /**
  * closed: the business has closed for good; moved: it is at a new address;
  * parked: the domain is for sale, parked or a placeholder; new_owner: the
- * domain now belongs to someone else.
+ * domain now belongs to someone else; other: anything else a mapper should
+ * look at (explained in `note`), e.g. a redirect to another domain.
  */
 export type SignalKind = (typeof SIGNAL_KINDS)[number];
 
@@ -48,6 +49,8 @@ export interface RawSignal {
   kind: SignalKind;
   quote: string;
   source_url: string;
+  /** what is noticeable, for "other"; empty for the other kinds (older answers do not have it) */
+  note?: string;
 }
 
 /** What the model found on the website, independent of the current tags. */
@@ -100,6 +103,7 @@ export interface AnalyzeOptions {
 export interface Proposal {
   /** the OSM key, e.g. 'opening_hours', 'contact:phone', 'contact:linkedin' */
   key: string;
+  /** empty: remove the tag (a phone tag whose only number moves to contact:mobile) */
   value: string;
   /** the current value, undefined if the tag is new */
   oldValue?: string;
@@ -118,6 +122,8 @@ export interface Signal {
   kind: SignalKind;
   quote: string;
   sourceUrl: string;
+  /** the model's explanation, for "other" */
+  note?: string;
 }
 
 export type RejectReason = 'unchanged' | 'invalid' | 'quote_not_found' | 'foreign_source' | 'unknown_key';
@@ -130,6 +136,8 @@ export interface Rejected {
 
 export interface FetchedPage {
   url: string;
+  /** the address actually received, if the page redirected (e.g. to another domain) */
+  finalUrl?: string;
   /** set if the page could not be fetched, e.g. 'url_not_allowed' (robots.txt) */
   error?: string;
 }

@@ -32,7 +32,8 @@ export function isRawAnswer(value: unknown): value is RawAnswer {
     isString(p.value) &&
     isString(p.quote) &&
     isString(p.source_url);
-  const signalOk = (s: unknown) => isObject(s) && oneOf(SIGNAL_KINDS, s.kind) && isString(s.quote) && isString(s.source_url);
+  const signalOk = (s: unknown) =>
+    isObject(s) && oneOf(SIGNAL_KINDS, s.kind) && isString(s.quote) && isString(s.source_url) && (s.note === undefined || isString(s.note));
   return value.proposals.every(proposalOk) && value.signals.every(signalOk);
 }
 
@@ -120,10 +121,6 @@ export function targetKey(base: string, tags: Record<string, string>): string {
   if (existing !== undefined) {
     return existing;
   }
-  // a new mobile number takes the form of the phone number
-  if (base === 'mobile' && tags.phone !== undefined && tags['contact:phone'] === undefined) {
-    return 'mobile';
-  }
   return base === 'website' ? 'website' : `contact:${base}`;
 }
 
@@ -201,9 +198,11 @@ export function checkAnswer(
   request: AssistRequest,
   validate: Validate = (_key, value) => ({ valid: true, value }),
   compare?: Compare,
+  /** addresses the site redirected to; quotes from there count as from the site */
+  redirects: string[] = [],
 ): { proposals: Proposal[]; signals: Signal[]; rejected: Rejected[] } {
   const host = siteHost(request.url) ?? '';
-  const hosts = siteHosts(host, pages);
+  const hosts = [...siteHosts(host, pages), ...redirects.flatMap((url) => siteHost(url) ?? [])];
   const onWebsite = (url: string) => hosts.some((h) => onSite(url, h));
   const tags = request.element.tags;
   const text = (url: string) => pages.get(url) ?? [...pages.values()].join('\n');
@@ -273,37 +272,63 @@ export function checkAnswer(
 
   const signals = answer.signals
     .filter((raw) => onWebsite(raw.source_url) && quoteOnPage(text(raw.source_url), raw.quote))
-    .map((raw) => ({ kind: raw.kind, quote: raw.quote, sourceUrl: raw.source_url }));
+    .map((raw) => ({
+      kind: raw.kind,
+      quote: raw.quote,
+      sourceUrl: raw.source_url,
+      ...(raw.note === undefined || raw.note.trim() === '' ? {} : { note: raw.note.trim() }),
+    }));
   return { proposals, signals, rejected };
 }
 
 /**
- * A phone value that drops a number now suggested as mobile number must be
- * applied together with the mobile suggestion, or the number is lost.
+ * Links phone and mobile suggestions, so a mobile number ends up in
+ * contact:mobile and not twice:
+ * - a phone suggestion that drops a number now suggested as mobile number
+ *   must be applied together with it, or the number is lost;
+ * - a phone tag that holds the mobile number, without a phone suggestion of
+ *   its own, gets one without that number (an empty value removes the tag),
+ *   also only together with the mobile suggestion.
  */
 function linkMobile(proposals: Proposal[], tags: Record<string, string>): void {
   const mobile = proposals.find((p) => ['mobile', 'contact:mobile'].includes(p.key));
   if (mobile === undefined) {
     return;
   }
-  const numbers = (value: string | undefined) => (value ?? '').split(';').map(digits).filter((n) => n !== '');
-  const moved = numbers(mobile.value);
-  for (const proposal of proposals) {
-    if (!['phone', 'contact:phone'].includes(proposal.key) || proposal.oldValue === undefined) {
+  // compare without country code and trunk prefix: 49171… and 0171…
+  const same = (a: string, b: string) => digits(a).slice(-9) === digits(b).slice(-9);
+  const parts = (value: string) => value.split(';').map((n) => n.trim()).filter((n) => digits(n) !== '');
+  const moved = parts(mobile.value);
+  const isMoved = (n: string) => moved.some((m) => same(n, m));
+  const together = { key: mobile.key, value: mobile.value };
+  for (const key of ['phone', 'contact:phone']) {
+    const oldValue = tags[key];
+    if (oldValue === undefined || !parts(oldValue).some(isMoved)) {
       continue;
     }
-    const kept = numbers(proposal.value);
-    const dropped = numbers(proposal.oldValue).filter((n) => !kept.includes(n));
-    // compare without country code and trunk prefix: 49171… and 0171…
-    const same = (a: string, b: string) => a.slice(-9) === b.slice(-9);
-    if (dropped.some((n) => moved.some((m) => same(n, m))) && tags[mobile.key] !== mobile.value) {
-      proposal.together = { key: mobile.key, value: mobile.value };
+    const suggested = proposals.find((p) => p.key === key);
+    if (suggested !== undefined) {
+      const kept = parts(suggested.value);
+      if (parts(oldValue).some((n) => isMoved(n) && !kept.some((k) => same(k, n)))) {
+        suggested.together = together;
+      }
+      continue;
     }
+    const proposal: Proposal = {
+      key,
+      value: parts(oldValue).filter((n) => !isMoved(n)).join('; '),
+      oldValue,
+      quote: mobile.quote,
+      sourceUrl: mobile.sourceUrl,
+      together,
+    };
+    proposals.splice(proposals.indexOf(mobile), 0, proposal);
   }
 }
 
 /** Compares what was read on the website with the tags of one element. Costs nothing. */
 export function assess(reading: SiteReading, request: AssistRequest, validate?: Validate, compare?: Compare): AssistResult {
-  const checked = checkAnswer(reading.answer, new Map(Object.entries(reading.texts)), request, validate, compare);
+  const redirects = reading.pages.flatMap((page) => page.finalUrl ?? []);
+  const checked = checkAnswer(reading.answer, new Map(Object.entries(reading.texts)), request, validate, compare, redirects);
   return { ...checked, pages: reading.pages, model: reading.model, usage: reading.usage };
 }

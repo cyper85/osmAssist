@@ -26,11 +26,12 @@ export const ANSWER_SCHEMA = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['kind', 'quote', 'source_url'],
+        required: ['kind', 'quote', 'source_url', 'note'],
         properties: {
           kind: { type: 'string', enum: [...SIGNAL_KINDS] },
           quote: { type: 'string' },
           source_url: { type: 'string' },
+          note: { type: 'string' },
         },
       },
     },
@@ -60,10 +61,12 @@ Signals (field "signals"), only if a fetched page clearly says so:
 - moved: the business has moved to a new address.
 - parked: the domain is for sale, parked, or shows only a placeholder.
 - new_owner: the website now belongs to a different business or person.
+- other: anything else a mapper should look at that none of the kinds above covers, for example: the site redirects to another domain or business; it lists branches elsewhere but not this one; it only shows unrelated content; the business is temporarily closed; it names another website for the business without saying it is the new address. Explain it in "note" in one sentence (for a redirect, name the target address). Report it instead of a value you are unsure about.
 
 For every suggestion and signal:
 - "quote": a short passage copied character for character from the fetched page that shows the value (at most about 200 characters). For links and e-mail addresses the quote must contain the link or address.
 - "source_url": the URL of the fetched page the quote is from.
+- "note" (signals only): for "other" the one-sentence explanation, for all other kinds an empty string.
 
 If the pages state nothing of this, return empty lists.`;
 

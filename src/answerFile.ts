@@ -23,6 +23,8 @@ export interface ElementId {
 
 export interface AnswerPage {
   url: string;
+  /** the address actually received, if the site redirected */
+  final_url?: string;
   /** the saved HTML, relative to the working folder */
   file?: string;
   error?: string;
@@ -99,6 +101,10 @@ export const ANSWER_FILE_SCHEMA = {
         required: ['url'],
         properties: {
           url: { type: 'string' },
+          final_url: {
+            type: 'string',
+            description: 'The address actually received, if the page redirected (e.g. to another domain); omit otherwise.',
+          },
           // seiten/ in German job files, pages/ in English ones (JOB_FOLDERS)
           file: { type: 'string', pattern: '^(seiten|pages)/[^/]+\\.html$' },
           error: { type: 'string' },
@@ -143,6 +149,7 @@ export function parseAnswerFile(json: string): AnswerFile {
   const pageOk = (p: unknown) =>
     isObject(p) &&
     typeof p.url === 'string' &&
+    (p.final_url === undefined || typeof p.final_url === 'string') &&
     (p.file === undefined || typeof p.file === 'string') &&
     (p.error === undefined || typeof p.error === 'string');
   if (!pages.every(pageOk)) {
@@ -155,7 +162,9 @@ export function parseAnswerFile(json: string): AnswerFile {
   const answer = {
     proposals: data.proposals,
     signals: Array.isArray(signals)
-      ? signals.map((s) => (isObject(s) ? { kind: s.kind, quote: s.quote, source_url: s.source_url } : s))
+      ? signals.map((s) =>
+          isObject(s) ? { kind: s.kind, quote: s.quote, source_url: s.source_url, note: typeof s.note === 'string' ? s.note : '' } : s,
+        )
       : signals,
   };
   if (!isRawAnswer(answer)) {
@@ -249,7 +258,13 @@ export function readingFromAnswer(answer: AnswerFile, files: Map<string, string>
     if (html.trim() === '') {
       return { url: page.url, error: `file empty: ${page.file}` };
     }
-    texts[page.url] = htmlToText(html, page.url);
+    const text = htmlToText(html, page.url);
+    texts[page.url] = text;
+    // the quotes may name the address of a redirect as their source
+    if (page.final_url !== undefined && page.final_url !== page.url) {
+      texts[page.final_url] = text;
+      return { url: page.url, finalUrl: page.final_url };
+    }
     return { url: page.url };
   });
   return {

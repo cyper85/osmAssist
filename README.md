@@ -3,7 +3,8 @@
 Suggests [OpenStreetMap](https://www.openstreetmap.org) tag changes from a
 feature's own website with the help of an AI model: opening hours, phone,
 mobile and fax numbers, e-mail addresses, WhatsApp, a new website address and linked profiles on
-social networks, plus signals that the business has closed, moved, or that
+social networks, plus signals that the business has closed, moved, that
+something else is noticeable (e.g. a redirect to another domain), or that
 the domain is parked or belongs to someone else.
 
 The library only makes suggestions. Every suggestion comes with a verbatim
@@ -57,7 +58,7 @@ const result = await provider.analyze(
 );
 
 result.proposals; // [{ key: 'opening_hours', value: 'Mo-Fr 06:00-18:00', oldValue?, quote, sourceUrl }]
-result.signals;   // [{ kind: 'closed' | 'moved' | 'parked' | 'new_owner', quote, sourceUrl }]
+result.signals;   // [{ kind: 'closed' | 'moved' | 'parked' | 'new_owner' | 'other', quote, sourceUrl, note? }]
 result.rejected;  // suggestions that failed a check, with reason
 result.pages;     // fetched pages, with an error code where fetching failed
 result.usage;     // tokens and estimated cost in USD
@@ -82,12 +83,15 @@ assess(reading, { ...request, element: otherElement }, validate);
 Keys follow the form the feature already uses (`phone` or `contact:phone`);
 new contact tags get `contact:*`.
 
-Mobile numbers go to `contact:mobile` (or `mobile`, if the feature uses
-`phone`). Besides what the model reports as `mobile`, numbers reported as
+Mobile numbers go to `contact:mobile` (`mobile` only if the feature has
+that tag already). Besides what the model reports as `mobile`, numbers reported as
 `phone` with a certain mobile prefix (Germany +49 15/16/17, Austria +43 6,
 Switzerland +41 75–79) are moved there. A phone suggestion that drops a
 number now suggested as mobile number carries `together` (key and value of
-the mobile suggestion): applied alone, the number would be lost.
+the mobile suggestion): applied alone, the number would be lost. If a phone
+tag holds the mobile number and there is no phone suggestion for it, one is
+added without that number (empty value: remove the tag), also with
+`together`, so the number is not kept twice.
 
 WhatsApp (`contact:whatsapp`) is only suggested if the quote names WhatsApp
 or contains a wa.me link: the number, if the page clearly states it

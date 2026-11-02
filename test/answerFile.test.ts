@@ -148,6 +148,8 @@ describe('parseAnswerFile', () => {
         kind: 'closed',
         quote: 'müssen wir das Ilmenauer Bowlingcenter leider zum 31.03.2026 schließen.',
         source_url: 'https://ilmbowl.de/',
+        // older answers have no note
+        note: '',
       },
     ]);
     expect(answer.proposals).toHaveLength(3);

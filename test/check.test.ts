@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { checkAnswer, isMobileNumber, isRawAnswer, separateMobile, targetKey } from '../src/check.js';
+import { assess, checkAnswer, isMobileNumber, isRawAnswer, separateMobile, targetKey } from '../src/check.js';
+import { parseAnswerFile, readingFromAnswer } from '../src/answerFile.js';
 import { containsQuote, onSite, siteHost } from '../src/text.js';
 import type { AssistRequest, RawAnswer, RawProposal, Validate } from '../src/types.js';
 
@@ -207,11 +208,32 @@ Fax: 03677 123457`;
     ]);
   });
 
-  it('suggests contact:mobile, or mobile if the element uses phone', () => {
+  it('suggests contact:mobile, mobile only if the element has it already', () => {
     const result = checkAnswer(answer(phone('+49 3677 123456; +49 171 2345678')), contact, request({}));
     expect(result.proposals.map((p) => `${p.key}=${p.value}`)).toEqual(['contact:phone=+49 3677 123456', 'contact:mobile=+49 171 2345678']);
-    expect(targetKey('mobile', { phone: '+49 1' })).toBe('mobile');
+    expect(targetKey('mobile', { phone: '+49 1' })).toBe('contact:mobile');
     expect(targetKey('mobile', { 'contact:phone': '+49 1' })).toBe('contact:mobile');
+    expect(targetKey('mobile', { phone: '+49 1', mobile: '+49 171 1' })).toBe('mobile');
+  });
+
+  // Jena, 2026-11-02: phone=+49 17623100008, the site names it as mobile number
+  it('removes the mobile number from phone, together with the mobile suggestion', () => {
+    const mobileOnly = { ...phone('+49 171 2345678'), field: 'mobile' as const };
+    const result = checkAnswer(answer(mobileOnly), contact, request({ phone: '+491712345678' }));
+    expect(result.proposals).toEqual([
+      expect.objectContaining({ key: 'phone', value: '', oldValue: '+491712345678', together: { key: 'contact:mobile', value: '+49 171 2345678' } }),
+      expect.objectContaining({ key: 'contact:mobile', value: '+49 171 2345678' }),
+    ]);
+    expect(result.proposals[1]!.together).toBeUndefined();
+  });
+
+  it('keeps the other numbers in phone', () => {
+    const mobileOnly = { ...phone('+49 171 2345678'), field: 'mobile' as const };
+    const result = checkAnswer(answer(mobileOnly), contact, request({ 'contact:phone': '+49 3677 123456;+49 171 2345678' }));
+    expect(result.proposals.map((p) => `${p.key}=${p.value}${p.together ? ' (together)' : ''}`)).toEqual([
+      'contact:phone=+49 3677 123456 (together)',
+      'contact:mobile=+49 171 2345678',
+    ]);
   });
 
   it('links the phone suggestion to the mobile one if it drops the number', () => {
@@ -265,5 +287,47 @@ WhatsApp: 0151 98765432 · oder schreiben Sie uns: https://wa.me/message/ABCDEF1
 
   it('rejects a number that is not on the page', () => {
     expect(reasons(whatsapp('+49 151 11111111', 'WhatsApp: 0151 98765432'))).toEqual(['Number not found on the page']);
+  });
+});
+
+describe('other signals', () => {
+  const site = 'https://www.sonnenschein.example/';
+  const target = 'https://www.notar-maass.example/';
+  const redirected = 'Notar Maaß – Ihr Notar in Jena';
+  const signal = (fields: Partial<RawAnswer['signals'][number]>): RawAnswer => ({
+    proposals: [],
+    signals: [{ kind: 'other', quote: 'Unsere Filialen: Gera, Rudolstadt, Suhl', source_url: site, note: 'Keine Filiale in Jena.', ...fields }],
+  });
+
+  it('keeps the note', () => {
+    const result = checkAnswer(signal({}), new Map([[site, 'Unsere Filialen: Gera, Rudolstadt, Suhl']]), request({}));
+    expect(result.signals).toEqual([
+      { kind: 'other', quote: 'Unsere Filialen: Gera, Rudolstadt, Suhl', sourceUrl: site, note: 'Keine Filiale in Jena.' },
+    ]);
+  });
+
+  it('accepts quotes from the address the site redirected to', () => {
+    const answer = signal({ quote: redirected, source_url: target, note: 'Die Website leitet auf notar-maass.example um.' });
+    const pages = new Map([[target, redirected]]);
+    expect(checkAnswer(answer, pages, request({})).signals).toEqual([]);
+    expect(checkAnswer(answer, pages, request({}), undefined, undefined, [target]).signals).toHaveLength(1);
+  });
+
+  it('knows the redirect from the answer file', () => {
+    const file = parseAnswerFile(
+      JSON.stringify({
+        format: 'osmcorrection-assist-answer',
+        version: 1,
+        job: 'a51',
+        elements: ['node/1'],
+        url: site,
+        pages: [{ url: site, final_url: target, file: 'seiten/a51-1.html' }],
+        proposals: [],
+        signals: [{ kind: 'other', quote: redirected, source_url: target, note: 'Umleitung auf notar-maass.example.' }],
+      }),
+    );
+    const reading = readingFromAnswer(file, new Map([['seiten/a51-1.html', `<html><body><p>${redirected}</p></body></html>`]]));
+    expect(reading.pages).toEqual([{ url: site, finalUrl: target }]);
+    expect(assess(reading, request({})).signals).toMatchObject([{ kind: 'other', note: 'Umleitung auf notar-maass.example.' }]);
   });
 });

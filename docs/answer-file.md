@@ -43,9 +43,9 @@ can be checked against what the website really says.
 | `elements` | the elements of the job, e.g. `["node/42", "way/4711"]` |
 | `url` | the website from the OSM data |
 | `fetched_with` | `"browser"` (headless Edge/Chrome, with JavaScript) or `"curl"` |
-| `pages` | every page fetched: `url` and either `file` (path of the saved HTML, `seiten/<name>.html` or `pages/<name>.html`) or `error` (e.g. `"HTTP 404"`) |
+| `pages` | every page fetched: `url` and either `file` (path of the saved HTML, `seiten/<name>.html` or `pages/<name>.html`) or `error` (e.g. `"HTTP 404"`); `final_url` if the page redirected to another address (quotes from there count as from the website) |
 | `proposals` | values the pages state, as for the API: `field`, `network`, `value`, `quote`, `source_url` |
-| `signals` | `kind` (`closed`, `moved`, `parked`, `new_owner`), `quote`, `source_url` |
+| `signals` | `kind` (`closed`, `moved`, `parked`, `new_owner`, `other`), `quote`, `source_url`, `note` (for `other` one sentence on what is noticeable, otherwise `""`; older answers without it are accepted) |
 
 `proposals` and `signals` have the same entries as the structured output of
 the API (`ANSWER_SCHEMA`). The agent reports **everything** the pages state,
@@ -78,7 +78,7 @@ slip does not make a whole run useless:
   then `undefined` and the caller has to ask for the vendor.
 
 Other deviations throw an error that names the entry and field, e.g.
-`signals[0]: "kind" must be one of closed, moved, parked, new_owner`.
+`signals[0]: "kind" must be one of closed, moved, parked, new_owner, other`.
 
 ## Example
 

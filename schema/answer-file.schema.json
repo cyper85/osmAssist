@@ -88,6 +88,10 @@
           "url": {
             "type": "string"
           },
+          "final_url": {
+            "type": "string",
+            "description": "The address actually received, if the page redirected (e.g. to another domain); omit otherwise."
+          },
           "file": {
             "type": "string",
             "pattern": "^(seiten|pages)/[^/]+\\.html$"
@@ -181,7 +185,8 @@
         "required": [
           "kind",
           "quote",
-          "source_url"
+          "source_url",
+          "note"
         ],
         "properties": {
           "kind": {
@@ -190,13 +195,17 @@
               "closed",
               "moved",
               "parked",
-              "new_owner"
+              "new_owner",
+              "other"
             ]
           },
           "quote": {
             "type": "string"
           },
           "source_url": {
+            "type": "string"
+          },
+          "note": {
             "type": "string"
           }
         }
