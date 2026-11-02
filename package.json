@@ -3,18 +3,29 @@
   "version": "0.1.0",
   "description": "Suggest OpenStreetMap tag changes from a feature's website with the help of an AI model. Every suggestion comes with a verbatim quote and must be approved by a human.",
   "author": "Andreas Neumann <andr.neumann@googlemail.com>",
+  "contributors": [
+    "Andreas Neumann <andr.neumann@googlemail.com>"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/cyper85/osmAssist.git"
   },
+  "bugs": {
+    "url": "https://github.com/cyper85/osmAssist/issues"
+  },
+  "homepage": "https://github.com/cyper85/osmAssist#readme",
   "keywords": [
     "OpenStreetMap",
     "opening_hours",
+    "contact",
+    "website",
     "AI",
-    "Claude"
+    "Claude",
+    "validation"
   ],
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -36,7 +47,8 @@
     "test": "vitest run",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "schema": "npm run build && node scripts/write-schema.mjs"
+    "schema": "npm run build && node scripts/write-schema.mjs",
+    "prepublishOnly": "npm run build && npm test"
   },
   "engines": {
     "node": ">=22"

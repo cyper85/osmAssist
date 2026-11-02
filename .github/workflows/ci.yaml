@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [22, 24, 26]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  package:
+    name: Build package
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Smoke test built package
+        run: |
+          node --input-type=module -e "
+            import { parseElementId, htmlToText, ANSWER_FILE_SCHEMA } from './dist/index.js';
+            import { createClaudeProvider } from './dist/claude.js';
+            import { readFileSync } from 'node:fs';
+            if (parseElementId('node/42')?.id !== 42) process.exit(1);
+            if (!htmlToText('<a href=\"mailto:a@b.de\">Mail</a>').includes('mailto:a@b.de')) process.exit(1);
+            if (typeof createClaudeProvider !== 'function') process.exit(1);
+            const file = JSON.parse(readFileSync('schema/answer-file.schema.json', 'utf8'));
+            if (JSON.stringify(file) !== JSON.stringify(ANSWER_FILE_SCHEMA)) process.exit(1);
+          "
+      - run: npm pack
+      - uses: actions/upload-artifact@v7
+        with:
+          name: npm-package
+          path: '*.tgz'

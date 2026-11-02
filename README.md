@@ -22,6 +22,18 @@ before anything is changed in OpenStreetMap. It is used by
   found on a fetched page of the site; links and e-mail addresses must
   appear on the page as well.
 
+## Installation
+
+```bash
+npm install osmassist
+```
+
+ES module with TypeScript types, for Node.js ≥ 22 and browsers (via a
+bundler). The Claude provider is a separate entry point
+(`osmassist/claude`), so a web app loads the Anthropic SDK only where it is
+used. The JSON Schema of the answer files is part of the package
+(`osmassist/schema/answer-file.schema.json`).
+
 ## Usage
 
 ```ts
@@ -121,6 +133,11 @@ npm test        # vitest, with recorded API responses (no real API calls)
 npm run build   # dist/
 npm run schema  # schema/answer-file.schema.json from the code
 ```
+
+Releases: a GitHub release with a tag like `v0.1.0` (matching `version` in
+`package.json`) publishes the package to npm (`.github/workflows/publish.yaml`,
+npm trusted publishing, no token). Versions with a suffix such as
+`1.0.0-alpha.1` get the npm tag `next`, others `latest`.
 
 ## License
 
