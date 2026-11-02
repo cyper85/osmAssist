@@ -91,13 +91,14 @@ in English; callers translate them by code.
 To use an AI plan instead of API credits, the analysis can run in an AI
 agent on the user's computer, e.g. Claude Code with a Claude plan, Kiro or
 Codex CLI: `jobFile` writes the instructions with the element IDs
-(`auftrag.md`), the agent saves the pages (headless browser or `curl`) and
-writes one answer file per job, and the app reads them back:
+(`auftrag.md` in German, `job.md` in English with `language: 'en'`), the
+agent saves the pages (headless browser or `curl`) and writes one answer
+file per job, and the app reads them back:
 
 ```ts
 import { assess, parseAnswerFile, readingFromAnswer } from 'osmassist';
 
-const answer = parseAnswerFile(json);                       // antworten/a1.json
+const answer = parseAnswerFile(json);                       // antworten/a1.json or answers/a1.json
 answer.ai;                                                  // { vendor, model, tool }, as the agent states it
 const reading = readingFromAnswer(answer, pages, vendor);   // pages: path → saved HTML; vendor: confirmed by the user
 assess(reading, { element, url: answer.url, today }, validate);

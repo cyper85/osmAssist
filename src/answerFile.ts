@@ -99,7 +99,8 @@ export const ANSWER_FILE_SCHEMA = {
         required: ['url'],
         properties: {
           url: { type: 'string' },
-          file: { type: 'string', pattern: '^seiten/[^/]+\\.html$' },
+          // seiten/ in German job files, pages/ in English ones (JOB_FOLDERS)
+          file: { type: 'string', pattern: '^(seiten|pages)/[^/]+\\.html$' },
           error: { type: 'string' },
         },
         oneOf: [{ required: ['file'] }, { required: ['error'] }],

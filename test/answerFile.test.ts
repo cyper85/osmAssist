@@ -4,7 +4,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import { ANSWER_FILE_SCHEMA, parseAnswerFile, parseElementId, readingFromAnswer } from '../src/answerFile.js';
 import { assess } from '../src/check.js';
 import { decodeHtml, htmlToText } from '../src/html.js';
-import { jobFile } from '../src/jobFile.js';
+import { JOB_FOLDERS, jobFile } from '../src/jobFile.js';
 
 const SITE = 'https://www.sonnenschein.example/';
 
@@ -242,5 +242,47 @@ describe('jobFile', () => {
     expect(text).toContain(`"--user-data-dir=""$PWD\\browser"""`);
     expect(text).toContain('-RedirectStandardOutput "$PWD\\seiten\\a1-1.html" -Wait');
     expect(text).not.toContain('--user-data-dir=browser');
+  });
+
+  it('is German by default', () => {
+    expect(text).toMatch(/^# Auftrag: /);
+    expect(jobFile({ jobs: [], today: '2026-11-02', language: 'de' })).toMatch(/^# Auftrag: /);
+  });
+});
+
+describe('jobFile in English', () => {
+  const text = jobFile({
+    jobs: [{ id: 'a1', elements: [{ type: 'node', id: 42 }] }],
+    today: '2026-11-02',
+    part: 'part 1 of 2',
+    language: 'en',
+  });
+  const block = (heading: string) => new RegExp(`### ${heading}\\n\\n\`\`\`json\\n([\\s\\S]*?)\\n\`\`\``).exec(text)?.[1] ?? '';
+
+  it('has the English instructions, folders and job list', () => {
+    expect(text).toMatch(/^# Job: analyze websites for OpenStreetMap \(part 1 of 2\)/);
+    expect(text).toContain('“Work through job.md”');
+    expect(text).toContain('answers/<job>.json');
+    expect(text).toContain('> pages/a1-1.html');
+    expect(text).not.toMatch(/seiten\/|antworten\/|Auftrag/);
+    expect(text).toContain('- a1: node/42');
+  });
+
+  it('keeps the rules on extensions and the maker of the model', () => {
+    expect(text).toContain('`+49 3677 6414-0`, not\n  `+49 3677 64140`');
+    expect(text).toContain('A Claude model running in Kiro is `Anthropic`.');
+  });
+
+  it('contains the same schema and an example that matches it', () => {
+    expect(JSON.parse(block('JSON Schema'))).toEqual(ANSWER_FILE_SCHEMA);
+    const validate = new Ajv2020({ strict: false }).compile(ANSWER_FILE_SCHEMA);
+    const example = block('Example');
+    expect(validate(JSON.parse(example)), JSON.stringify(validate.errors)).toBe(true);
+    expect(parseAnswerFile(example).pages[0]).toEqual({ url: 'https://www.example-bakery.com/', file: 'pages/a1-1.html' });
+  });
+
+  it('names the files of the working folder', () => {
+    expect(JOB_FOLDERS.en).toEqual({ file: 'job.md', pages: 'pages', answers: 'answers' });
+    expect(JOB_FOLDERS.de).toEqual({ file: 'auftrag.md', pages: 'seiten', answers: 'antworten' });
   });
 });

@@ -18,4 +18,4 @@ export {
   type ElementId,
 } from './answerFile.js';
 export { decodeEntities, decodeHtml, htmlToText } from './html.js';
-export { jobFile, type Job, type JobFileOptions } from './jobFile.js';
+export { jobFile, JOB_FOLDERS, type Job, type JobFileOptions, type JobLanguage } from './jobFile.js';

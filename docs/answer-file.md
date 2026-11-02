@@ -13,13 +13,16 @@ instead of calling an AI API, e.g. Claude Code with the user's Claude plan,
 Kiro or Codex CLI. Any agent that can run commands and write files works; a
 pure chat does not, because it cannot save the pages.
 
-1. The app writes a job file (`jobFile()`, saved as `auftrag.md`): German
-   instructions for the agent, this schema, an example and the list of jobs.
+1. The app writes a job file (`jobFile()`, saved as `auftrag.md` in German
+   or `job.md` in English, option `language`): instructions for the agent,
+   this schema, an example and the list of jobs.
    A job is one website with the OpenStreetMap elements that use it, e.g.
    `a1: node/42, way/4711`.
 2. The agent fetches the elements from the OSM API, saves the pages of the
-   website unchanged as HTML in `seiten/` (headless browser, or `curl`), and
-   writes one answer file per job to `antworten/<job>.json`.
+   website unchanged as HTML in `seiten/` (English: `pages/`; headless
+   browser, or `curl`), and writes one answer file per job to
+   `antworten/<job>.json` (English: `answers/<job>.json`). `JOB_FOLDERS`
+   has the names per language.
 3. The app reads the folder back: `parseAnswerFile()` for each answer,
    `readingFromAnswer()` with the saved pages, then `assess()` for each
    element, with the same checks as for the API (quote on a saved page,
@@ -40,7 +43,7 @@ can be checked against what the website really says.
 | `elements` | the elements of the job, e.g. `["node/42", "way/4711"]` |
 | `url` | the website from the OSM data |
 | `fetched_with` | `"browser"` (headless Edge/Chrome, with JavaScript) or `"curl"` |
-| `pages` | every page fetched: `url` and either `file` (path of the saved HTML, `seiten/<name>.html`) or `error` (e.g. `"HTTP 404"`) |
+| `pages` | every page fetched: `url` and either `file` (path of the saved HTML, `seiten/<name>.html` or `pages/<name>.html`) or `error` (e.g. `"HTTP 404"`) |
 | `proposals` | values the pages state, as for the API: `field`, `network`, `value`, `quote`, `source_url` |
 | `signals` | `kind` (`closed`, `moved`, `parked`, `new_owner`), `quote`, `source_url` |
 

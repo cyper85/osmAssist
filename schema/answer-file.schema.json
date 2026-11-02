@@ -90,7 +90,7 @@
           },
           "file": {
             "type": "string",
-            "pattern": "^seiten/[^/]+\\.html$"
+            "pattern": "^(seiten|pages)/[^/]+\\.html$"
           },
           "error": {
             "type": "string"
