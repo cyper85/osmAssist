@@ -1,8 +1,8 @@
 # osmAssist
 
 Suggests [OpenStreetMap](https://www.openstreetmap.org) tag changes from a
-feature's own website with the help of an AI model: opening hours, phone and
-fax numbers, e-mail addresses, a new website address and linked profiles on
+feature's own website with the help of an AI model: opening hours, phone,
+mobile and fax numbers, e-mail addresses, WhatsApp, a new website address and linked profiles on
 social networks, plus signals that the business has closed, moved, or that
 the domain is parked or belongs to someone else.
 
@@ -82,6 +82,17 @@ assess(reading, { ...request, element: otherElement }, validate);
 Keys follow the form the feature already uses (`phone` or `contact:phone`);
 new contact tags get `contact:*`.
 
+Mobile numbers go to `contact:mobile` (or `mobile`, if the feature uses
+`phone`). Besides what the model reports as `mobile`, numbers reported as
+`phone` with a certain mobile prefix (Germany +49 15/16/17, Austria +43 6,
+Switzerland +41 75–79) are moved there. A phone suggestion that drops a
+number now suggested as mobile number carries `together` (key and value of
+the mobile suggestion): applied alone, the number would be lost.
+
+WhatsApp (`contact:whatsapp`) is only suggested if the quote names WhatsApp
+or contains a wa.me link: the number, if the page clearly states it
+(compared by its digits with the page), otherwise the link (wa.me/<username>,
+wa.me/message/…).
 Errors are thrown as `AssistError` with a `code` (`auth`, `rate_limit`,
 `refused`, `incomplete`, `invalid_response`, `api`, `aborted`). Messages are
 in English; callers translate them by code.

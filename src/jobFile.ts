@@ -99,7 +99,7 @@ Agenten in dem Ordner, in dem diese Datei liegt, und schreibe: „Arbeite auftra
 ## Worum es geht
 
 Für jedes Objekt aus OpenStreetMap (OSM) unten liest du die eigene Website des Objekts und hältst fest,
-was sie zu Öffnungszeiten, Telefon, Fax, E-Mail, einer neuen Website-Adresse und Profilen in sozialen
+was sie zu Öffnungszeiten, Telefon, Handy, Fax, E-Mail, WhatsApp, einer neuen Website-Adresse und Profilen in sozialen
 Netzen sagt, und ob es Hinweise gibt, dass es das Geschäft nicht mehr gibt. Ein Programm vergleicht das
 später mit den OSM-Daten, und ein Mensch prüft jeden Vorschlag, bevor etwas geändert wird. Ein fehlender
 Vorschlag ist viel besser als ein falscher.
@@ -156,7 +156,8 @@ Wenn alle Aufträge erledigt sind: den Ordner \`browser/\` löschen.
 - \`opening_hours\`: die regulären Öffnungszeiten in OSM-Syntax (https://wiki.openstreetmap.org/wiki/Key:opening_hours),
   z. B. \`Mo-Fr 09:00-18:00; Sa 10:00-14:00\`. Vorübergehendes (Urlaub, Feiertage, einzelne Tage) weglassen,
   außer die Seite sagt, dass sich die regulären Zeiten ändern.
-- \`phone\`, \`fax\`: international mit Landesvorwahl, z. B. \`+49 3677 123456\`; mehrere mit \`; \` trennen.
+- \`phone\`, \`mobile\`, \`fax\`: international mit Landesvorwahl, z. B. \`+49 3677 123456\`; mehrere mit \`; \`
+  trennen. \`phone\` für Festnetznummern, \`mobile\` für Handynummern, \`fax\` für Faxnummern.
   Eine Durchwahl bleibt mit Bindestrich abgetrennt, wie auf der Seite: aus „03677 6414-0“ wird
   \`+49 3677 6414-0\`, nicht \`+49 3677 64140\`. Der Bindestrich ist in OpenStreetMap ausdrücklich erlaubt.
 - \`email\`: nur die Adresse, ohne \`mailto:\`.
@@ -165,6 +166,11 @@ Wenn alle Aufträge erledigt sind: den Ordner \`browser/\` löschen.
   ${networks()}.
   Keine Teilen-Schaltflächen, keine Profile der Webagentur oder anderer Firmen.
   Bei allen anderen Feldern ist \`network\` \`"none"\`.
+- WhatsApp (\`social\` mit \`network\` \`whatsapp\`): nur, wenn die Seite WhatsApp ausdrücklich als Kontaktweg
+  anbietet; das Zitat muss das Wort WhatsApp oder den wa.me-Link enthalten. Wert ist die Nummer international
+  (wie bei \`phone\`), wenn eindeutig dasteht, welche Nummer es ist (auch in einem Link wa.me/<nummer>),
+  sonst der Link wie auf der Seite (wa.me/<nutzername>, wa.me/message/…). Nie eine Telefon- oder
+  Handynummer als WhatsApp-Nummer melden, die nicht ausdrücklich für WhatsApp genannt ist.
 
 Jeder Eintrag in \`proposals\` hat genau die Felder \`field\`, \`network\`, \`value\`, \`quote\`, \`source_url\`.
 
@@ -222,7 +228,7 @@ this folder.
 ## What it is about
 
 For each OpenStreetMap (OSM) object below, read the object's own website and note what it says about
-opening hours, phone, fax, e-mail, a new website address and social media profiles, and whether there are
+opening hours, phone, mobile, fax, e-mail, WhatsApp, a new website address and social media profiles, and whether there are
 signs that the business no longer exists. A program later compares this with the OSM data, and a human
 reviews every suggestion before anything is changed. A missing suggestion is much better than a wrong one.
 
@@ -276,7 +282,8 @@ When all jobs are done: delete the folder \`browser/\`.
 - \`opening_hours\`: the regular opening hours in OSM syntax (https://wiki.openstreetmap.org/wiki/Key:opening_hours),
   e.g. \`Mo-Fr 09:00-18:00; Sa 10:00-14:00\`. Leave out temporary things (holidays, public holidays, single
   days), unless the page says that the regular hours change.
-- \`phone\`, \`fax\`: international with the country code, e.g. \`+49 3677 123456\`; separate several with \`; \`.
+- \`phone\`, \`mobile\`, \`fax\`: international with the country code, e.g. \`+49 3677 123456\`; separate several
+  with \`; \`. \`phone\` for landline numbers, \`mobile\` for mobile phone numbers, \`fax\` for fax numbers.
   An extension stays separated by a hyphen, as on the page: “03677 6414-0” becomes \`+49 3677 6414-0\`, not
   \`+49 3677 64140\`. The hyphen is explicitly allowed in OpenStreetMap.
 - \`email\`: only the address, without \`mailto:\`.
@@ -285,6 +292,11 @@ When all jobs are done: delete the folder \`browser/\`.
   ${networks()}.
   No share buttons, no profiles of the web agency or other companies.
   For all other fields \`network\` is \`"none"\`.
+- WhatsApp (\`social\` with \`network\` \`whatsapp\`): only if the page explicitly offers WhatsApp for contact;
+  the quote must contain the word WhatsApp or the wa.me link. The value is the number in international format
+  (as for \`phone\`) if the page clearly states which number it is (also in a link wa.me/<number>), otherwise
+  the link as on the page (wa.me/<username>, wa.me/message/…). Never report a phone or mobile number as
+  WhatsApp number unless it is explicitly named for WhatsApp.
 
 Every entry in \`proposals\` has exactly the fields \`field\`, \`network\`, \`value\`, \`quote\`, \`source_url\`.
 

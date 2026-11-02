@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { checkAnswer, isRawAnswer, targetKey } from '../src/check.js';
+import { checkAnswer, isMobileNumber, isRawAnswer, separateMobile, targetKey } from '../src/check.js';
 import { containsQuote, onSite, siteHost } from '../src/text.js';
 import type { AssistRequest, RawAnswer, RawProposal, Validate } from '../src/types.js';
 
@@ -174,5 +174,96 @@ describe('isRawAnswer', () => {
     expect(isRawAnswer({ proposals: [proposal({})], signals: [] })).toBe(true);
     expect(isRawAnswer({ proposals: [{ ...proposal({}), field: 'name' }], signals: [] })).toBe(false);
     expect(isRawAnswer({ proposals: [] })).toBe(false);
+  });
+});
+
+describe('mobile numbers', () => {
+  const CONTACT = `Bäckerei Sonnenschein
+Telefon: 03677 123456 · Mobil: 0171 2345678
+WhatsApp: 0151 98765432 · oder schreiben Sie uns: https://wa.me/message/ABCDEF123
+Fax: 03677 123457`;
+  const contact = new Map([['https://www.sonnenschein.example/kontakt', CONTACT]]);
+  const phone = (value: string, quote = 'Telefon: 03677 123456 · Mobil: 0171 2345678') => proposal({ field: 'phone', value, quote });
+
+  it('knows mobile numbers in Germany, Austria and Switzerland', () => {
+    expect(isMobileNumber('+49 171 2345678')).toBe(true);
+    expect(isMobileNumber('+43 664 1234567')).toBe(true);
+    expect(isMobileNumber('+41 79 1234567')).toBe(true);
+    expect(isMobileNumber('+49 3677 123456')).toBe(false);
+    expect(isMobileNumber('+41 44 1234567')).toBe(false);
+    expect(isMobileNumber('0171 2345678')).toBe(false);
+  });
+
+  it('moves mobile numbers reported as phone to mobile', () => {
+    expect(separateMobile([phone('+49 3677 123456; +49 171 2345678')])).toEqual([
+      phone('+49 3677 123456'),
+      { ...phone('+49 171 2345678'), field: 'mobile' },
+    ]);
+    // only a mobile number: no phone suggestion left
+    expect(separateMobile([phone('+49 171 2345678')]).map((p) => p.field)).toEqual(['mobile']);
+    // the same number from the model and moved here counts once
+    expect(separateMobile([phone('+49 171 2345678'), { ...phone('+49 171 2345678'), field: 'mobile' }])).toEqual([
+      { ...phone('+49 171 2345678'), field: 'mobile' },
+    ]);
+  });
+
+  it('suggests contact:mobile, or mobile if the element uses phone', () => {
+    const result = checkAnswer(answer(phone('+49 3677 123456; +49 171 2345678')), contact, request({}));
+    expect(result.proposals.map((p) => `${p.key}=${p.value}`)).toEqual(['contact:phone=+49 3677 123456', 'contact:mobile=+49 171 2345678']);
+    expect(targetKey('mobile', { phone: '+49 1' })).toBe('mobile');
+    expect(targetKey('mobile', { 'contact:phone': '+49 1' })).toBe('contact:mobile');
+  });
+
+  it('links the phone suggestion to the mobile one if it drops the number', () => {
+    const result = checkAnswer(
+      answer(phone('+49 3677 123456; +49 171 2345678')),
+      contact,
+      request({ 'contact:phone': '+49 3677 123456; +49 171 2345678' }),
+    );
+    expect(result.proposals).toMatchObject([
+      { key: 'contact:phone', value: '+49 3677 123456', together: { key: 'contact:mobile', value: '+49 171 2345678' } },
+      { key: 'contact:mobile', value: '+49 171 2345678' },
+    ]);
+    expect(result.proposals[1]!.together).toBeUndefined();
+  });
+
+  it('does not link it if the mobile number is in OSM already', () => {
+    const result = checkAnswer(
+      answer(phone('+49 3677 123456; +49 171 2345678')),
+      contact,
+      request({ phone: '+49 3677 123456; +49 171 2345678', mobile: '+49 171 2345678' }),
+    );
+    expect(result.proposals).toEqual([expect.objectContaining({ key: 'phone', value: '+49 3677 123456' })]);
+    expect(result.proposals[0]!.together).toBeUndefined();
+  });
+});
+
+describe('WhatsApp', () => {
+  const CONTACT = `Bäckerei Sonnenschein
+Telefon: 03677 123456 · Mobil: 0171 2345678
+WhatsApp: 0151 98765432 · oder schreiben Sie uns: https://wa.me/message/ABCDEF123`;
+  const contact = new Map([['https://www.sonnenschein.example/kontakt', CONTACT]]);
+  const whatsapp = (value: string, quote: string) => proposal({ field: 'social', network: 'whatsapp', value, quote });
+  const keys = (raw: RawProposal) =>
+    checkAnswer(answer(raw), contact, request({})).proposals.map((p) => `${p.key}=${p.value}`);
+  const reasons = (raw: RawProposal) =>
+    checkAnswer(answer(raw), contact, request({})).rejected.map((r) => r.message);
+
+  it('takes a number named for WhatsApp', () => {
+    expect(keys(whatsapp('+49 151 98765432', 'WhatsApp: 0151 98765432'))).toEqual(['contact:whatsapp=+49 151 98765432']);
+  });
+
+  it('takes a WhatsApp link without a number', () => {
+    expect(keys(whatsapp('https://wa.me/message/ABCDEF123', 'oder schreiben Sie uns: https://wa.me/message/ABCDEF123'))).toEqual([
+      'contact:whatsapp=https://wa.me/message/ABCDEF123',
+    ]);
+  });
+
+  it('rejects a number that is not named for WhatsApp', () => {
+    expect(reasons(whatsapp('+49 171 2345678', 'Mobil: 0171 2345678'))).toEqual(['The quote does not name WhatsApp']);
+  });
+
+  it('rejects a number that is not on the page', () => {
+    expect(reasons(whatsapp('+49 151 11111111', 'WhatsApp: 0151 98765432'))).toEqual(['Number not found on the page']);
   });
 });

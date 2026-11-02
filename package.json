@@ -1,6 +1,6 @@
 {
   "name": "osmassist",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.3",
   "description": "Suggest OpenStreetMap tag changes from a feature's website with the help of an AI model. Every suggestion comes with a verbatim quote and must be approved by a human.",
   "author": "Andreas Neumann <andr.neumann@googlemail.com>",
   "contributors": [

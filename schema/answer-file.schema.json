@@ -128,6 +128,7 @@
             "enum": [
               "opening_hours",
               "phone",
+              "mobile",
               "fax",
               "email",
               "website",

@@ -39,6 +39,71 @@ export function isRawAnswer(value: unknown): value is RawAnswer {
 /** Other spellings of a key, e.g. X for Twitter. */
 const ALIASES: Partial<Record<string, string[]>> = { twitter: ['twitter', 'x'] };
 
+const digits = (value: string) => value.replace(/\D/g, '');
+
+/**
+ * Mobile numbers by their international prefix, where it is certain:
+ * Germany 15x/16x/17x, Austria 6xx, Switzerland 75-79. Elsewhere only what
+ * the model reports as `mobile` counts.
+ */
+const MOBILE_PREFIX = /^(?:49(?:15|16|17)|436|417[5-9])/;
+
+export function isMobileNumber(value: string): boolean {
+  return value.trim().startsWith('+') && MOBILE_PREFIX.test(digits(value));
+}
+
+/**
+ * Moves mobile numbers the model reported as `phone` to `mobile` (with the
+ * same quote), so they end up in contact:mobile.
+ */
+export function separateMobile(proposals: RawProposal[]): RawProposal[] {
+  const result: RawProposal[] = [];
+  for (const raw of proposals) {
+    if (raw.field !== 'phone') {
+      result.push(raw);
+      continue;
+    }
+    const numbers = raw.value.split(';').map((n) => n.trim()).filter((n) => n !== '');
+    const mobile = numbers.filter(isMobileNumber);
+    const fixed = numbers.filter((n) => !isMobileNumber(n));
+    if (fixed.length > 0) {
+      result.push({ ...raw, value: fixed.join('; ') });
+    }
+    if (mobile.length > 0) {
+      result.push({ ...raw, field: 'mobile', value: mobile.join('; ') });
+    }
+  }
+  // several mobile entries (from the model and moved here) become one value
+  const mobiles = result.filter((raw) => raw.field === 'mobile');
+  if (mobiles.length < 2) {
+    return result;
+  }
+  const values = [...new Map(mobiles.flatMap((raw) => raw.value.split(';')).map((n) => [digits(n), n.trim()])).values()];
+  const first = result.indexOf(mobiles[0]!);
+  return result.flatMap((raw, index) =>
+    raw.field !== 'mobile' ? [raw] : index === first ? [{ ...raw, value: values.join('; ') }] : [],
+  );
+}
+
+/** A WhatsApp value that is a phone number, not a link. */
+const isNumber = (value: string) => /^\+?[\d\s()/-]{6,}$/.test(value.trim());
+
+/**
+ * Whether a phone number is on the page: its digits, with the country code
+ * (as in wa.me/49…) or without it, with or without the trunk prefix 0.
+ */
+function numberOnPage(page: string, value: string): boolean {
+  const text = page.split(/[^\d+]*[a-z][^\d+]*/i).map(digits).join(' ');
+  const all = digits(value);
+  return [0, 1, 2, 3].some((code) => {
+    const national = all.slice(code);
+    return national.length >= 6 && (text.includes(national) || text.includes(`0${national}`));
+  });
+}
+
+/** WhatsApp only if the page names it for this contact. */
+const WHATSAPP_QUOTE = /whats\s?app|wa\.me\//i;
+
 /**
  * The key for a suggestion in the form the element already uses: an existing
  * `contact:<name>`, else an existing `<name>`, else `contact:<name>`. The
@@ -54,6 +119,10 @@ export function targetKey(base: string, tags: Record<string, string>): string {
     names.map((name) => `contact:${name}`).find((key) => tags[key] !== undefined) ?? names.find((name) => tags[name] !== undefined);
   if (existing !== undefined) {
     return existing;
+  }
+  // a new mobile number takes the form of the phone number
+  if (base === 'mobile' && tags.phone !== undefined && tags['contact:phone'] === undefined) {
+    return 'mobile';
   }
   return base === 'website' ? 'website' : `contact:${base}`;
 }
@@ -143,7 +212,7 @@ export function checkAnswer(
   const reject = (proposal: Proposal, reason: Rejected['reason'], message: string) =>
     rejected.push({ proposal, reason, message });
 
-  for (const raw of answer.proposals) {
+  for (const raw of separateMobile(answer.proposals)) {
     const base = baseKey(raw);
     const key = base === undefined ? raw.field : targetKey(base, tags);
     const oldValue = tags[key];
@@ -167,7 +236,17 @@ export function checkAnswer(
       reject(proposal, 'quote_not_found', 'Quote not found on the page');
       continue;
     }
-    if (LINK_FIELDS.has(raw.field) && !page.toLowerCase().includes(bareUrl(raw.value.replace(/^mailto:/i, '')))) {
+    const whatsapp = raw.field === 'social' && raw.network === 'whatsapp';
+    if (whatsapp && !WHATSAPP_QUOTE.test(raw.quote)) {
+      reject(proposal, 'quote_not_found', 'The quote does not name WhatsApp');
+      continue;
+    }
+    if (whatsapp && isNumber(raw.value)) {
+      if (!numberOnPage(page, raw.value)) {
+        reject(proposal, 'quote_not_found', 'Number not found on the page');
+        continue;
+      }
+    } else if (LINK_FIELDS.has(raw.field) && !page.toLowerCase().includes(bareUrl(raw.value.replace(/^mailto:/i, '')))) {
       reject(proposal, 'quote_not_found', 'Link or address not found on the page');
       continue;
     }
@@ -190,10 +269,37 @@ export function checkAnswer(
     }
   }
 
+  linkMobile(proposals, tags);
+
   const signals = answer.signals
     .filter((raw) => onWebsite(raw.source_url) && quoteOnPage(text(raw.source_url), raw.quote))
     .map((raw) => ({ kind: raw.kind, quote: raw.quote, sourceUrl: raw.source_url }));
   return { proposals, signals, rejected };
+}
+
+/**
+ * A phone value that drops a number now suggested as mobile number must be
+ * applied together with the mobile suggestion, or the number is lost.
+ */
+function linkMobile(proposals: Proposal[], tags: Record<string, string>): void {
+  const mobile = proposals.find((p) => ['mobile', 'contact:mobile'].includes(p.key));
+  if (mobile === undefined) {
+    return;
+  }
+  const numbers = (value: string | undefined) => (value ?? '').split(';').map(digits).filter((n) => n !== '');
+  const moved = numbers(mobile.value);
+  for (const proposal of proposals) {
+    if (!['phone', 'contact:phone'].includes(proposal.key) || proposal.oldValue === undefined) {
+      continue;
+    }
+    const kept = numbers(proposal.value);
+    const dropped = numbers(proposal.oldValue).filter((n) => !kept.includes(n));
+    // compare without country code and trunk prefix: 49171… and 0171…
+    const same = (a: string, b: string) => a.slice(-9) === b.slice(-9);
+    if (dropped.some((n) => moved.some((m) => same(n, m))) && tags[mobile.key] !== mobile.value) {
+      proposal.together = { key: mobile.key, value: mobile.value };
+    }
+  }
 }
 
 /** Compares what was read on the website with the tags of one element. Costs nothing. */

@@ -48,10 +48,11 @@ How to work:
 
 Values (field "proposals"), for everything the pages state, whether or not it matches the current tags:
 - opening_hours: the regular opening hours in OpenStreetMap syntax (https://wiki.openstreetmap.org/wiki/Key:opening_hours), for example "Mo-Fr 09:00-18:00; Sa 10:00-14:00". Ignore temporary changes such as holidays, company holidays or single closed days unless the page says the regular hours have changed.
-- phone, fax: in international format with the country code, for example "+49 3677 123456". Several numbers are separated by "; ". Keep an extension separated by a hyphen as on the page: "03677 6414-0" becomes "+49 3677 6414-0", not "+49 3677 64140" (OpenStreetMap allows the hyphen).
+- phone, mobile, fax: in international format with the country code, for example "+49 3677 123456". "phone" is for landline numbers, "mobile" for mobile phone numbers (cell phones), "fax" for fax numbers. Several numbers are separated by "; ". Keep an extension separated by a hyphen as on the page: "03677 6414-0" becomes "+49 3677 6414-0", not "+49 3677 64140" (OpenStreetMap allows the hyphen).
 - email: the address only, without "mailto:".
 - website: only if the page itself says the business has a new website address.
 - social: links to the business's own profiles on the networks listed in "network" (Facebook, X/Twitter, Instagram, LinkedIn, XING, Mastodon, …), as the full link. Not share buttons, not profiles of the web designer or of other businesses. Set "network" to the network; for all other fields set "network" to "none".
+- WhatsApp (field "social", network "whatsapp"): only if the page explicitly offers WhatsApp for contacting the business, and the quote must contain the word WhatsApp or the wa.me link. The value is the phone number in international format if the page clearly states which number it is (also a number in a wa.me/<number> link); otherwise the link as on the page (wa.me/<username>, wa.me/message/…). Never infer the WhatsApp number from a phone or mobile number that is not explicitly named for WhatsApp.
 Do not suggest anything else (no name, no address).
 
 Signals (field "signals"), only if a fetched page clearly says so:
@@ -74,6 +75,7 @@ const SKIP_KEYS = /^(building|roof|height|level|layer|indoor|area|wheelchair|sou
 const FIELD_NAMES: Record<Field, string> = {
   opening_hours: 'opening hours',
   phone: 'phone numbers',
+  mobile: 'mobile phone numbers',
   fax: 'fax numbers',
   email: 'e-mail addresses',
   website: 'a new website address',

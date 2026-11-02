@@ -1,5 +1,5 @@
 /** What the model may suggest. */
-export const FIELDS = ['opening_hours', 'phone', 'fax', 'email', 'website', 'social'] as const;
+export const FIELDS = ['opening_hours', 'phone', 'mobile', 'fax', 'email', 'website', 'social'] as const;
 export type Field = (typeof FIELDS)[number];
 
 /** Social networks and messengers, as in osmValidation (`contact:<network>`). */
@@ -106,6 +106,12 @@ export interface Proposal {
   /** verbatim from the page */
   quote: string;
   sourceUrl: string;
+  /**
+   * Another suggestion that must be applied together with this one, e.g. a
+   * phone value without the mobile number that is suggested for
+   * contact:mobile; applied alone, the number would be lost.
+   */
+  together?: { key: string; value: string };
 }
 
 export interface Signal {
