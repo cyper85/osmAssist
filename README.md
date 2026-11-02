@@ -137,7 +137,9 @@ npm run schema  # schema/answer-file.schema.json from the code
 Releases: a GitHub release with a tag like `v1.0.0-alpha.1` (matching `version` in
 `package.json`) publishes the package to npm (`.github/workflows/publish.yaml`,
 npm trusted publishing, no token). Versions with a suffix such as
-`1.0.0-alpha.1` get the npm tag `next`, others `latest`.
+`1.0.0-alpha.1` get the npm tag `next`, others `latest`; as long as `latest`
+is only npm's placeholder from reserving the name (`0.0.0-stage`), a
+pre-release becomes `latest` as well.
 
 ## License
 

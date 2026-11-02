@@ -37,9 +37,18 @@ jobs:
             echo "Tag ${GITHUB_REF_NAME} does not match package version v${version}"
             exit 1
           fi
+          # while "latest" is only npm's placeholder (stub: true, 0.0.0-stage),
+          # a pre-release becomes "latest" as well, so `npm install` gets it
+          latest_is_stub=$(npm view osmassist@latest stub 2>/dev/null || true)
           case "$version" in
-            *-*) echo "NPM_TAG=next" >> "$GITHUB_ENV" ;;
-            *)   echo "NPM_TAG=latest" >> "$GITHUB_ENV" ;;
+            *-*)
+              if [ "$latest_is_stub" = "true" ]; then
+                echo "NPM_TAG=latest" >> "$GITHUB_ENV"
+              else
+                echo "NPM_TAG=next" >> "$GITHUB_ENV"
+              fi
+              ;;
+            *) echo "NPM_TAG=latest" >> "$GITHUB_ENV" ;;
           esac
       # prepublishOnly runs build and tests
       - run: npm publish --tag "$NPM_TAG"
