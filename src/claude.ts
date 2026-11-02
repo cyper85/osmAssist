@@ -139,8 +139,8 @@ export function createClaudeProvider(options: ClaudeOptions): Provider {
     id: 'claude',
     label: `Anthropic ${claudeModel(model).name}`,
     read,
-    async analyze(request: AssistRequest, { signal, validate }: AnalyzeOptions = {}): Promise<AssistResult> {
-      return assess(await read(request, signal === undefined ? {} : { signal }), request, validate);
+    async analyze(request: AssistRequest, { signal, validate, compare }: AnalyzeOptions = {}): Promise<AssistResult> {
+      return assess(await read(request, signal === undefined ? {} : { signal }), request, validate, compare);
     },
   };
 }

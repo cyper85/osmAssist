@@ -1,0 +1,58 @@
+{
+  "format": "osmcorrection-assist-answer",
+  "version": 1,
+  "job": "a6",
+  "elements": [
+    "node/6291131089"
+  ],
+  "url": "https://ilmbowl.de/",
+  "fetched_with": "browser",
+  "pages": [
+    {
+      "url": "https://ilmbowl.de/",
+      "file": "seiten/a6-1.html"
+    },
+    {
+      "url": "https://ilmbowl.de/kontakt/",
+      "file": "seiten/a6-2.html"
+    },
+    {
+      "url": "https://ilmbowl.de/footer-menue/anfahrt/",
+      "file": "seiten/a6-3.html"
+    },
+    {
+      "url": "https://ilmbowl.de/impressum/",
+      "file": "seiten/a6-4.html"
+    }
+  ],
+  "proposals": [
+    {
+      "field": "opening_hours",
+      "network": "none",
+      "value": "Mo,Tu off; We-Fr 16:00+; Sa,Su 15:00+",
+      "quote": "Montag & Dienstag Ruhetag Mittwoch, Donnerstag & Freitag ab 16.00 Uhr Samstag & Sonntag ab 15.00 Uhr",
+      "source_url": "https://ilmbowl.de/kontakt/"
+    },
+    {
+      "field": "phone",
+      "network": "none",
+      "value": "+49 3677 469595",
+      "quote": "Telefon: 03677 – 46 95 95",
+      "source_url": "https://ilmbowl.de/kontakt/"
+    },
+    {
+      "field": "email",
+      "network": "none",
+      "value": "info@ilmbowl.de",
+      "quote": "Email: info@ilmbowl.de",
+      "source_url": "https://ilmbowl.de/kontakt/"
+    }
+  ],
+  "signals": [
+    {
+      "signal": "closed",
+      "quote": "müssen wir das Ilmenauer Bowlingcenter leider zum 31.03.2026 schließen.",
+      "source_url": "https://ilmbowl.de/"
+    }
+  ]
+}
