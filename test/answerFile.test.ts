@@ -187,6 +187,15 @@ describe('readingFromAnswer', () => {
     expect(reading.pages[0]?.error).toMatch(/empty/);
   });
 
+  it('treats a page with both file and error as not fetched', () => {
+    // Kiro saved the "Access Denied" page and stated the error as well (2026-11-21)
+    const both = parseAnswerFile(answerJson({ pages: [{ url: SITE, file: 'seiten/a1-1.html', error: 'HTTP 403' }] }));
+    const reading = readingFromAnswer(both, new Map([['seiten/a1-1.html', HTML]]));
+    expect(reading.pages).toEqual([{ url: SITE, error: 'HTTP 403' }]);
+    const request = { element: { type: 'node' as const, id: 42, tags: {} }, url: SITE, today: '2026-11-02' };
+    expect(assess(reading, request).proposals).toEqual([]);
+  });
+
   it('finds files with Windows separators', () => {
     const windows = parseAnswerFile(answerJson({ pages: [{ url: SITE, file: '.\\seiten\\a1-1.html' }] }));
     expect(readingFromAnswer(windows, new Map([['seiten/a1-1.html', HTML]])).pages).toEqual([{ url: SITE }]);

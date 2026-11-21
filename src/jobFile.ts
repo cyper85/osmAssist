@@ -202,6 +202,9 @@ im Chat zu erwähnen, z. B.:
 
 Was du unsicher findest, gehört als \`other\` in \`signals\`, nicht als Wert in \`proposals\`.
 
+Konnte eine Seite nicht abgerufen werden (Sperre, Bot-Schutz, Zeitüberschreitung, HTTP-Fehler), steht das nur
+in \`pages\` als \`error\`, nicht in \`signals\`. Eine Seite hat entweder \`file\` oder \`error\`, nie beides.
+
 Für jeden Eintrag in beiden Listen:
 
 - \`quote\`: eine kurze Stelle (höchstens etwa 200 Zeichen), Zeichen für Zeichen aus dem Text der Seite
@@ -342,6 +345,9 @@ in the chat, e.g.:
 - The page names another website of the business without saying it is the new address.
 
 What you are unsure about belongs into \`signals\` as \`other\`, not as a value into \`proposals\`.
+
+If a page could not be fetched (blocked, bot protection, timeout, HTTP error), say so only in \`pages\` as
+\`error\`, not in \`signals\`. A page has either \`file\` or \`error\`, never both.
 
 For every entry in both lists:
 

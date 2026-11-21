@@ -75,7 +75,10 @@ slip does not make a whole run useless:
 - `signal` or `type` instead of `kind` in a signal (seen in the first real
   run),
 - a missing `ai` (answers written before version 1 had it): `answer.ai` is
-  then `undefined` and the caller has to ask for the vendor.
+  then `undefined` and the caller has to ask for the vendor,
+- a page with both `file` and `error` (seen with Kiro and MiniMax): the page
+  counts as not fetched, because the saved file is then an error page such
+  as "Access Denied"; quotes from it are rejected.
 
 Other deviations throw an error that names the entry and field, e.g.
 `signals[0]: "kind" must be one of closed, moved, parked, new_owner, other`.

@@ -242,13 +242,15 @@ export function folderPath(path: string): string {
 /**
  * The reading of one answer file, with the text of its saved pages. A page
  * whose file is missing counts as not fetched, so its quotes are rejected.
+ * So does a page with both "file" and "error" (against the schema): the
+ * saved file is then an error page, e.g. "Access Denied" (Kiro, 2026-11-21).
  * `vendor` is the maker of the model as confirmed by the user; without it,
  * the one the answer states.
  */
 export function readingFromAnswer(answer: AnswerFile, files: Map<string, string>, vendor?: string): SiteReading {
   const texts: Record<string, string> = {};
   const pages: FetchedPage[] = answer.pages.map((page) => {
-    if (page.file === undefined) {
+    if (page.file === undefined || page.error !== undefined) {
       return { url: page.url, error: page.error ?? 'not fetched' };
     }
     const html = files.get(folderPath(page.file));
