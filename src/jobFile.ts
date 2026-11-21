@@ -144,7 +144,14 @@ Vorschlag ist viel besser als ein falscher.
      bliebe leer):
      \`Start-Process -FilePath "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe" -ArgumentList '--headless','--disable-gpu','--no-first-run',"--user-data-dir=""$PWD\\browser""",'--virtual-time-budget=8000','--dump-dom','<website>' -RedirectStandardOutput "$PWD\\seiten\\a1-1.html" -Wait -NoNewWindow\`
    - macOS: \`"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --disable-gpu --no-first-run --user-data-dir="$PWD/browser" --virtual-time-budget=8000 --dump-dom <website> > seiten/a1-1.html\`
-   - Linux: \`chromium\` oder \`google-chrome\` mit denselben Optionen wie unter macOS.
+   - Linux: jeder Browser auf Chromium-Basis mit denselben Optionen wie unter macOS. Der Name des Programms
+     hängt von der Distribution ab, zuerst suchen:
+     \`command -v chromium chromium-browser google-chrome google-chrome-stable microsoft-edge brave-browser\`
+     (z. B. \`chromium-browser\` unter Rocky Linux, Fedora und älteren Ubuntu-Versionen). Läuft der Agent als
+     root, zusätzlich \`--no-sandbox\`. Bleibt die Datei bei einem Chromium aus Snap leer, das Profil unter
+     \`$HOME/snap/chromium/common/browser\` anlegen.
+   - Firefox kann den fertigen Seiteninhalt ohne Zusatzprogramm nicht speichern (kein \`--dump-dom\`). Nur
+     verwenden, wenn Playwright oder Selenium installiert ist.
    - Ist kein solcher Browser vorhanden: \`curl -sL --max-time 20 --max-filesize 2000000 -A "osmCorrection (KI-Agent)" -o seiten/a1-1.html <website>\`
      und in der Antwort \`"fetched_with": "curl"\` angeben.
    - Ist eine gespeicherte Datei leer, die Seite in \`pages\` mit \`error\` vermerken.
@@ -289,7 +296,14 @@ reviews every suggestion before anything is changed. A missing suggestion is muc
      would stay empty):
      \`Start-Process -FilePath "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe" -ArgumentList '--headless','--disable-gpu','--no-first-run',"--user-data-dir=""$PWD\\browser""",'--virtual-time-budget=8000','--dump-dom','<website>' -RedirectStandardOutput "$PWD\\pages\\a1-1.html" -Wait -NoNewWindow\`
    - macOS: \`"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --disable-gpu --no-first-run --user-data-dir="$PWD/browser" --virtual-time-budget=8000 --dump-dom <website> > pages/a1-1.html\`
-   - Linux: \`chromium\` or \`google-chrome\` with the same options as on macOS.
+   - Linux: any Chromium-based browser with the same options as on macOS. The name of the program depends
+     on the distribution, look for it first:
+     \`command -v chromium chromium-browser google-chrome google-chrome-stable microsoft-edge brave-browser\`
+     (e.g. \`chromium-browser\` on Rocky Linux, Fedora and older Ubuntu releases). If the agent runs as root,
+     add \`--no-sandbox\`. If the file stays empty with a Chromium from Snap, create the profile under
+     \`$HOME/snap/chromium/common/browser\`.
+   - Firefox cannot save the finished page content without an extra program (no \`--dump-dom\`). Only use it
+     if Playwright or Selenium is installed.
    - If there is no such browser: \`curl -sL --max-time 20 --max-filesize 2000000 -A "osmCorrection (AI agent)" -o pages/a1-1.html <website>\`
      and state \`"fetched_with": "curl"\` in the answer.
    - If a saved file is empty, record the page in \`pages\` with \`error\`.
